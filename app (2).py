@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 import os
 import time
-
+# in order to run the app , run in terminal -m streamlit run "app (2).py" 
 # ── Page config (must be first Streamlit call) ─────────────────────────────────
 st.set_page_config(
     page_title="CropScan — Crop Disease Detector",
