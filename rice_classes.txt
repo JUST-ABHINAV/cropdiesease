@@ -1,0 +1,4 @@
+rice_bacterial_leaf_blight
+rice_brown_spot
+rice_healthy
+rice_leaf_smut

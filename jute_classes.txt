@@ -1,0 +1,3 @@
+jute_cescospora_leaf_spot
+jute_golden_mosaic
+jute_healthy

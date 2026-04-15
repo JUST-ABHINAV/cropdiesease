@@ -1,0 +1,5 @@
+sugarcane_healthy
+sugarcane_mosaic
+sugarcane_redrot
+sugarcane_rust
+sugarcane_yellow

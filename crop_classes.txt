@@ -1,0 +1,6 @@
+coffee
+cotton
+jute
+rice
+sugarcane
+wheat

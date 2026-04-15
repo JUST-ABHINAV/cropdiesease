@@ -1,0 +1,6 @@
+cotton_aphids_edited
+cotton_army_worm_edited
+cotton_bacterial_blight_edited
+cotton_healthy
+cotton_powdery_mildew_edited
+cotton_target_spot_edited
