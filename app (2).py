@@ -11,20 +11,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-st.markdown("""
-<div style="
-    background: linear-gradient(135deg,#1a3a2a,#2d5a3d);
-    padding: 28px;
-    border-radius: 18px;
-    color: white;
-    margin-bottom: 2rem;
-">
-    <h1 style="margin:0;font-size:2.2rem;">🌿 CropScan AI</h1>
-    <p style="margin-top:6px;font-size:0.95rem;opacity:0.9;">
-        Smart crop & disease detection powered by deep learning
-    </p>
-</div>
-""", unsafe_allow_html=True)
+
 # ── Global CSS ─────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
@@ -55,10 +42,7 @@ html, body, [class*="css"] {
     font-family: 'DM Sans', sans-serif;
     color: var(--text-dark);
 }
-
-.stApp {
-    background: linear-gradient(135deg, #eef5f0 0%, #e6f2ea 100%);
-}
+.stApp { background: var(--page-bg); }
 #MainMenu, footer, header { visibility: hidden; }
 .block-container { padding: 2rem 2.5rem 4rem; max-width: 1100px; }
 
@@ -114,33 +98,18 @@ html, body, [class*="css"] {
 
 /* Upload zone */
 [data-testid="stFileUploader"] {
-    background: rgba(255,255,255,0.7);
-    border: 2px dashed #4a8c5c;
-    border-radius: 16px;
-    padding: 2rem;
-    transition: all 0.3s ease;
+    background: var(--card-bg);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius); padding: 2rem 1.5rem;
+    transition: border-color 0.2s, background 0.2s;
 }
+[data-testid="stFileUploader"]:hover { border-color: var(--green-soft); background: #f7fbf8; }
 
-[data-testid="stFileUploader"]:hover {
-    border-color: #2d5a3d;
-    background: rgba(255,255,255,0.9);
-    box-shadow: 0 0 20px rgba(74,140,92,0.2);
-}
 /* Cards */
 .card {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-radius: 18px;
-    padding: 1.6rem;
-    border: 1px solid rgba(255,255,255,0.4);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+    background: var(--card-bg); border-radius: var(--radius);
+    padding: 1.5rem; box-shadow: var(--shadow);
+    border: 1px solid var(--border);
 }
 .card-label {
     font-size: 0.72rem; font-weight: 600;
@@ -150,16 +119,8 @@ html, body, [class*="css"] {
 
 /* Result */
 .result-crop {
-    font-size: 2.3rem;
-    font-weight: 700;
-    color: #1a3a2a;
-    letter-spacing: -0.5px;
-}
-
-.result-disease {
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: #2d5a3d;
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem; color: var(--green-dark); line-height: 1.1; margin: 0 0 4px;
 }
 .result-disease { font-size: 1.05rem; color: var(--text-mid); margin-bottom: 18px; }
 .disease-tag {
@@ -249,6 +210,33 @@ html, body, [class*="css"] {
 .empty-state .big-icon { font-size: 3.5rem; margin-bottom: 12px; }
 .empty-state h3 { font-family:'DM Serif Display',serif; color:var(--text-mid); font-size:1.3rem; margin-bottom:8px; }
 .empty-state p  { font-size:0.88rem; max-width:320px; margin:0 auto; }
+
+/* Advice cards */
+.advice-card {
+    background: var(--card-bg); border-radius: var(--radius);
+    padding: 1.25rem 1.4rem; border: 1px solid var(--border);
+    box-shadow: var(--shadow); height: 100%;
+}
+.advice-card.now-card    { border-top: 3px solid var(--red-soft); }
+.advice-card.future-card { border-top: 3px solid var(--green-soft); }
+.advice-card h4 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem; margin: 0 0 12px;
+}
+.advice-card.now-card h4    { color: var(--red-soft); }
+.advice-card.future-card h4 { color: var(--green-mid); }
+.advice-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 7px 0; border-bottom: 1px solid var(--border);
+    font-size: 0.86rem; color: var(--text-mid); line-height: 1.5;
+}
+.advice-item:last-child { border-bottom: none; }
+.advice-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 6px;
+}
+.now-dot    { background: var(--red-soft); }
+.future-dot { background: var(--green-soft); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -256,6 +244,202 @@ html, body, [class*="css"] {
 # ── Helpers ─────────────────────────────────────────────────────────────────────
 
 CROPS = ["coffee", "cotton", "jute", "rice", "sugarcane", "wheat"]
+
+# ── Disease advice lookup ──────────────────────────────────────────────────────
+DISEASE_ADVICE = {
+    # Coffee
+    "coffee_miner": {
+        "now":     ["Remove and destroy heavily infested leaves immediately",
+                    "Apply neem oil spray (5 ml/litre) on leaf undersides",
+                    "Use yellow sticky traps to catch adult leaf miners"],
+        "prevent": ["Inspect plants weekly, especially young shoots",
+                    "Maintain proper spacing for good air circulation",
+                    "Avoid excess nitrogen fertiliser — it attracts miners",
+                    "Introduce parasitic wasps as natural predators if available"],
+    },
+    "coffee_rust": {
+        "now":     ["Remove all infected leaves and burn or bury them",
+                    "Apply copper-based fungicide (Bordeaux mixture) immediately",
+                    "Stop wetting foliage when watering"],
+        "prevent": ["Apply preventive copper fungicide before rainy season",
+                    "Plant rust-resistant coffee varieties where possible",
+                    "Prune plants to improve airflow and reduce humidity",
+                    "Water at the base only — avoid overhead irrigation"],
+    },
+    # Cotton
+    "cotton_aphids_edited": {
+        "now":     ["Spray a strong jet of water to knock aphids off",
+                    "Apply insecticidal soap or neem oil solution",
+                    "Remove ant colonies nearby — ants protect aphids"],
+        "prevent": ["Encourage natural predators like ladybirds and lacewings",
+                    "Avoid over-fertilising with nitrogen",
+                    "Monitor plants weekly from the seedling stage",
+                    "Use reflective mulches to deter aphid landings"],
+    },
+    "cotton_army_worm_edited": {
+        "now":     ["Hand-pick caterpillars and egg masses early in the morning",
+                    "Apply Bacillus thuringiensis (Bt) spray — safe and effective",
+                    "Use recommended insecticides if infestation is severe"],
+        "prevent": ["Set up pheromone traps to monitor moth activity",
+                    "Till soil after harvest to destroy pupae",
+                    "Practice crop rotation to break the pest cycle",
+                    "Plant early to avoid peak armyworm season"],
+    },
+    "cotton_bacterial_blight_edited": {
+        "now":     ["Remove and destroy all infected plant material",
+                    "Apply copper-based bactericide spray immediately",
+                    "Avoid working in the field when plants are wet"],
+        "prevent": ["Use certified disease-free, treated seeds only",
+                    "Rotate crops — avoid planting cotton consecutively",
+                    "Improve drainage to avoid waterlogging",
+                    "Sanitise all farm tools between uses"],
+    },
+    "cotton_powdery_mildew_edited": {
+        "now":     ["Apply sulphur-based fungicide or potassium bicarbonate spray",
+                    "Remove the worst affected leaves",
+                    "Improve air circulation around plants immediately"],
+        "prevent": ["Avoid planting in shaded or poorly ventilated areas",
+                    "Water at the base — wet foliage encourages mildew",
+                    "Apply preventive sulphur sprays at season start",
+                    "Choose mildew-resistant cotton varieties"],
+    },
+    "cotton_target_spot_edited": {
+        "now":     ["Apply mancozeb or chlorothalonil fungicide to affected areas",
+                    "Remove and destroy badly infected leaves",
+                    "Prune to reduce canopy density and lower humidity"],
+        "prevent": ["Rotate crops yearly to prevent pathogen build-up in soil",
+                    "Avoid over-irrigation — keep the canopy dry",
+                    "Apply preventive fungicide during high-humidity periods",
+                    "Destroy crop residues after harvest"],
+    },
+    # Jute
+    "jute_cescospora_leaf_spot": {
+        "now":     ["Spray mancozeb (2 g/litre) at first sign of spots",
+                    "Remove heavily infected lower leaves",
+                    "Avoid splashing water between plants"],
+        "prevent": ["Use healthy certified seeds",
+                    "Maintain proper plant spacing for good airflow",
+                    "Apply preventive fungicide during wet weather",
+                    "Burn crop debris at the end of the season"],
+    },
+    "jute_golden_mosaic": {
+        "now":     ["Uproot and destroy infected plants immediately — virus spreads fast",
+                    "Control whiteflies (virus carriers) with neem oil spray",
+                    "Do not compost infected plant material"],
+        "prevent": ["Plant only virus-free certified seeds",
+                    "Control whiteflies with yellow sticky traps",
+                    "Plant at the recommended time to avoid peak whitefly season",
+                    "Remove weeds around the field — they host the virus"],
+    },
+    # Rice
+    "rice_bacterial_leaf_blight": {
+        "now":     ["Drain the field immediately — stagnant water worsens blight",
+                    "Stop nitrogen fertiliser application right away",
+                    "Apply copper-based bactericide if available"],
+        "prevent": ["Use certified resistant varieties (e.g. IR64, Swarna Sub1)",
+                    "Avoid excessive nitrogen — it makes plants more susceptible",
+                    "Ensure proper field drainage before planting",
+                    "Treat seeds with streptomycin before sowing"],
+    },
+    "rice_brown_spot": {
+        "now":     ["Apply tricyclazole or mancozeb fungicide immediately",
+                    "Ensure the field is not water-stressed — improve irrigation",
+                    "Apply potassium fertiliser to boost plant immunity"],
+        "prevent": ["Maintain balanced soil nutrition, especially potassium",
+                    "Use disease-free certified seeds",
+                    "Treat seeds with thiram or captan before planting",
+                    "Avoid drought stress — keep irrigation consistent"],
+    },
+    "rice_leaf_smut": {
+        "now":     ["Apply propiconazole fungicide at early infection stage",
+                    "Remove and destroy smutted panicles before spores spread",
+                    "Avoid moving equipment between infected and healthy fields"],
+        "prevent": ["Use smut-resistant rice varieties",
+                    "Treat seeds with carbendazim before sowing",
+                    "Avoid late planting — early crops escape peak smut infection",
+                    "Practice crop rotation with non-cereal crops"],
+    },
+    # Sugarcane
+    "sugarcane_mosaic": {
+        "now":     ["Uproot and destroy infected plants immediately",
+                    "Control aphid vectors with neem oil or insecticide",
+                    "Do not use cuttings from infected plants as seed material"],
+        "prevent": ["Plant only certified disease-free setts",
+                    "Use mosaic-resistant varieties like Co 86032",
+                    "Control aphids regularly throughout the season",
+                    "Remove weed hosts around the field boundary"],
+    },
+    "sugarcane_redrot": {
+        "now":     ["Remove and burn infected stalks — never leave in the field",
+                    "Improve drainage immediately — avoid waterlogging",
+                    "Drench soil around infected areas with carbendazim solution"],
+        "prevent": ["Use resistant varieties like Co 0238 or CoJ 64",
+                    "Treat seed setts in carbendazim before planting",
+                    "Ensure good field drainage — red rot thrives when waterlogged",
+                    "Avoid ratoon crops from infected fields"],
+    },
+    "sugarcane_rust": {
+        "now":     ["Apply propiconazole or trifloxystrobin fungicide immediately",
+                    "Remove and destroy heavily infected leaves",
+                    "Avoid irrigation that wets the foliage"],
+        "prevent": ["Plant rust-resistant sugarcane varieties",
+                    "Apply preventive fungicide sprays during the rainy season",
+                    "Maintain proper spacing to improve air circulation",
+                    "Monitor crops regularly from the tillering stage"],
+    },
+    "sugarcane_yellow": {
+        "now":     ["Test soil — yellowing is often a nitrogen or iron deficiency",
+                    "Apply urea (top dressing) if nitrogen deficiency is confirmed",
+                    "Control aphids and whiteflies that may carry yellow leaf virus"],
+        "prevent": ["Use balanced fertilisation — soil test before every season",
+                    "Plant certified virus-free seed setts",
+                    "Control vector insects from early growth stage",
+                    "Maintain consistent irrigation — avoid water stress"],
+    },
+    # Wheat
+    "wheat_septoria": {
+        "now":     ["Apply propiconazole or tebuconazole fungicide immediately",
+                    "Remove lower infected leaves if crop is at early stage",
+                    "Avoid overhead irrigation — it spreads spores"],
+        "prevent": ["Use certified septoria-resistant wheat varieties",
+                    "Apply preventive fungicide at the flag leaf stage",
+                    "Practice crop rotation — septoria survives on wheat stubble",
+                    "Bury or burn crop residues after harvest"],
+    },
+    "wheat_stripe_rust": {
+        "now":     ["Apply tebuconazole or propiconazole fungicide immediately",
+                    "Monitor the whole field — stripe rust spreads very rapidly",
+                    "Report severe outbreaks to your local agricultural officer"],
+        "prevent": ["Plant resistant varieties — check with your local seed supplier",
+                    "Sow at the recommended time — avoid very early sowing",
+                    "Apply preventive fungicide at the booting stage if rust is forecast",
+                    "Avoid dense sowing — good airflow slows rust spread"],
+    },
+}
+
+HEALTHY_ADVICE = {
+    "now":     ["Your crop looks healthy — no action required right now",
+                "Continue your regular irrigation and fertilisation schedule",
+                "Keep monitoring weekly for any early signs of disease"],
+    "prevent": ["Maintain proper plant spacing and field hygiene",
+                "Use balanced fertilisation — avoid excess nitrogen",
+                "Remove weeds regularly — they host pests and diseases",
+                "Keep records of any treatments applied this season"],
+}
+
+def get_advice(dis_name_raw):
+    key = dis_name_raw.lower().strip()
+    if key in DISEASE_ADVICE:
+        return DISEASE_ADVICE[key]["now"], DISEASE_ADVICE[key]["prevent"]
+    if "healthy" in key:
+        return HEALTHY_ADVICE["now"], HEALTHY_ADVICE["prevent"]
+    return (
+        ["Consult a local agricultural extension officer for guidance.",
+         "Take a clear sample to your nearest Krishi Vigyan Kendra (KVK)."],
+        ["Monitor the crop closely over the next few days.",
+         "Maintain good field hygiene — remove dead plant material."],
+    )
+
 
 # ── Model loading ─────────────────────────────────────────────────────────────
 
@@ -293,27 +477,11 @@ def load_all_models():
 
 # ── Inference ─────────────────────────────────────────────────────────────────
 
-# def preprocess(img: Image.Image):
-#     import torch
-#     arr = np.array(img.convert("RGB").resize((224, 224)), dtype=np.float32) / 255.0
-#     arr = (arr - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225]
-#     return torch.tensor(arr.transpose(2, 0, 1)[np.newaxis], dtype=torch.float32)
-
-def preprocess(img):
+def preprocess(img: Image.Image):
     import torch
-    from torchvision import transforms
-
-    transform = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]
-        )
-    ])
-
-    return transform(img).unsqueeze(0)
+    arr = np.array(img.convert("RGB").resize((224, 224)), dtype=np.float32) / 255.0
+    arr = (arr - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225]
+    return torch.tensor(arr.transpose(2, 0, 1)[np.newaxis], dtype=torch.float32)
 
 def predict_two_stage(img, crop_model, crop_classes, disease_models, disease_classes):
     import torch
@@ -390,8 +558,19 @@ if not models_ok:
     )
     st.stop()
 
-st.markdown('<div class="status-pill"><div class="status-dot"></div>7 models ready</div>', unsafe_allow_html=True)
-
+st.markdown("""
+<div class="card" style="margin-bottom:20px">
+    <div class="card-label">Supported Crops</div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px">
+        <span class="sidebar-badge" style="background:var(--green-dark);color:white;border:none">🌾 Rice</span>
+        <span class="sidebar-badge" style="background:var(--green-dark);color:white;border:none">🌿 Wheat</span>
+        <span class="sidebar-badge" style="background:var(--green-dark);color:white;border:none">🍃 Cotton</span>
+        <span class="sidebar-badge" style="background:var(--green-dark);color:white;border:none">☕ Coffee</span>
+        <span class="sidebar-badge" style="background:var(--green-dark);color:white;border:none">🌱 Jute</span>
+        <span class="sidebar-badge" style="background:var(--green-dark);color:white;border:none">🎋 Sugarcane</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 uploaded = st.file_uploader(
     "Drop a leaf image here, or click to browse",
     type=["jpg", "jpeg", "png"],
@@ -464,15 +643,17 @@ if uploaded:
             </div>
         </div>
         """, unsafe_allow_html=True)
-
+    
     # ── Top disease predictions for the detected crop ─────────────────────────
     st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
-    st.markdown(f'<div class="card-label">All {crop_name.title()} disease probabilities</div>',
+    # st.markdown(f'<div class="card-label">All {crop_name.title()}
+    #  disease probabilities</div>',
+    st.markdown(f'<div class="card-label">Model considered these possibilities</div>',
                 unsafe_allow_html=True)
 
     top_idx = np.argsort(d_probs)[::-1]
     rows = ""
-    for rank, idx in enumerate(top_idx, 1):
+    for rank, idx in enumerate(top_idx[:3], 1):
         label = fmt_disease(d_classes[idx], crop_name)
         pct   = float(d_probs[idx]) * 100
         r1    = "r1" if rank == 1 else ""
@@ -491,6 +672,38 @@ if uploaded:
         </div>"""
     st.markdown(f'<div class="card">{rows}</div>', unsafe_allow_html=True)
 
+
+    # ── Disease advice ────────────────────────────────────────────────────────
+    if dis_conf >= 60:
+        st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
+        advice_header = "🌿 Healthy plant — keep it that way!" if is_healthy else f"🚨 {disease_label} detected — here's what to do"
+        st.markdown(f'<div class="card-label">{advice_header}</div>', unsafe_allow_html=True)
+
+        now_list, prevent_list = get_advice(dis_name)
+
+        now_items = "".join(
+            f'<div class="advice-item"><div class="advice-dot now-dot"></div><span>{item}</span></div>'
+            for item in now_list
+        )
+        prevent_items = "".join(
+            f'<div class="advice-item"><div class="advice-dot future-dot"></div><span>{item}</span></div>'
+            for item in prevent_list
+        )
+
+        col_now, col_prev = st.columns(2, gap="medium")
+        with col_now:
+            st.markdown(f"""
+            <div class="advice-card now-card">
+                <h4>{"✅ Keep doing" if is_healthy else "⚠️ What to do now"}</h4>
+                {now_items}
+            </div>""", unsafe_allow_html=True)
+        with col_prev:
+            st.markdown(f"""
+            <div class="advice-card future-card">
+                <h4>🛡️ How to prevent this</h4>
+                {prevent_items}
+            </div>""", unsafe_allow_html=True)
+
     # Low confidence tips
     if dis_conf < 60:
         st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
@@ -503,6 +716,12 @@ if uploaded:
             <div class="tip-card"><div class="tip-icon">📷</div><strong>Avoid blur</strong>Tap to focus before shooting.</div>
         </div>
         """, unsafe_allow_html=True)
+
+        # ── Reset / Try another image ─────────────────────────────
+        st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
+
+        if st.button("🔄 Try another image"):
+            st.experimental_rerun()
 
 else:
     st.markdown("""
