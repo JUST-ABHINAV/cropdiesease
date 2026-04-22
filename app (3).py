@@ -526,8 +526,8 @@ def fmt_disease(raw, crop):
     return label
 
 def conf_style(pct):
-    if pct >= 75: return "fill-high",   "hint-high",   "✓", "High confidence — reliable result."
-    if pct >= 50: return "fill-medium", "hint-medium", "⚠", "Moderate confidence — try a clearer photo."
+    if pct >= 65: return "fill-high",   "hint-high",   "✓", "High confidence — reliable result."
+    if pct >= 40: return "fill-medium", "hint-medium", "⚠", "Moderate confidence — try a clearer photo."
     return          "fill-low",    "hint-low",    "✕", "Low confidence — retake in better lighting."
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
