@@ -554,7 +554,6 @@ with st.sidebar:
     st.markdown("### Photo tips")
     st.markdown("- 📸 Use natural daylight\n- 🍃 One leaf per photo\n- 🔍 Fill the frame\n- 🚫 Avoid blur or shadows")
 
-# ── Main ──────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="page-header">
     <div class="icon-wrap">🌾</div>
